@@ -67,3 +67,6 @@ coverage.xml
 # System Files
 Thumbs.db
 ehthumbs.db
+
+# Windows Batch Files
+up.bat
