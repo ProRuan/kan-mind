@@ -26,3 +26,17 @@ class TaskSerializer(serializers.ModelSerializer):
             'due_date',
             'comments_count',
         ]
+
+    # def update(self, instance, validated_data):
+    #     if 'board' in validated_data:
+    #         raise serializers.ValidationError(
+    #             {"board": "Ändern der Board-ID ist nicht erlaubt."})
+    #     return super().update(instance, validated_data)
+
+# think about this!
+
+
+class TaskOverviewSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Task
+        fields = ['id', 'title', 'status', 'priority', 'due_date']
