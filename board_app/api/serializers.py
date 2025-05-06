@@ -1,6 +1,6 @@
 from django.contrib.auth.models import User
 from rest_framework import serializers
-from .models import Board
+from .models import Board, Task
 
 
 class BoardOverviewSerializer(serializers.ModelSerializer):
@@ -42,3 +42,64 @@ class BoardCreateSerializer(serializers.ModelSerializer):
         board = Board.objects.create(owner=owner, **validated_data)
         board.members.set(members)
         return board
+
+
+class UserShortSerializer(serializers.ModelSerializer):
+    fullname = serializers.SerializerMethodField()
+
+    class Meta:
+        model = User
+        # model = CustomUser
+        fields = ['id', 'email', 'fullname']
+
+    def get_fullname(self, obj):
+        return f"{obj.first_name} {obj.last_name}".strip()
+
+
+class TaskSerializer(serializers.ModelSerializer):
+    assignee = UserShortSerializer(read_only=True)
+    reviewer = UserShortSerializer(read_only=True)
+
+    class Meta:
+        model = Task
+        fields = [
+            'id', 'title', 'description', 'status', 'priority',
+            'assignee', 'reviewer', 'due_date', 'comments_count'
+        ]
+
+
+class BoardDetailSerializer(serializers.ModelSerializer):
+    members = UserShortSerializer(many=True, read_only=True)
+    tasks = serializers.SerializerMethodField()
+
+    class Meta:
+        model = Board
+        fields = ['id', 'title', 'owner_id', 'members', 'tasks']
+
+    def get_tasks(self, obj):
+        tasks = self.context.get('tasks', Task.objects.none())
+        return TaskSerializer(tasks, many=True).data
+
+
+class BoardUpdateSerializer(serializers.ModelSerializer):
+    members = serializers.PrimaryKeyRelatedField(
+        queryset=User.objects.all(), many=True, required=False)
+    # queryset=CustomUser.objects.all(), many=True, required=False)
+
+    class Meta:
+        model = Board
+        fields = ['title', 'members']
+
+    def update(self, instance, validated_data):
+        members = validated_data.pop('members', None)
+        if members is not None:
+            instance.members.set(members)
+        return super().update(instance, validated_data)
+
+    def to_representation(self, instance):
+        return {
+            'id': instance.id,
+            'title': instance.title,
+            'owner_data': UserShortSerializer(instance.owner).data,
+            'members_data': UserShortSerializer(instance.members.all(), many=True).data
+        }
