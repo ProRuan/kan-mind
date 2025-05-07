@@ -2,8 +2,8 @@ from django.contrib.auth.models import User
 from .serializers import TaskSerializer
 from django.shortcuts import get_object_or_404
 from rest_framework import permissions, generics
-from .models import Task
-from .serializers import TaskCreateSerializer, TaskSerializer
+from .models import Task, Comment
+from .serializers import TaskCreateSerializer, TaskSerializer, CommentSerializer
 
 # GET
 from rest_framework.views import APIView
@@ -90,3 +90,36 @@ class TaskDetailView(APIView):
 
         task.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
+
+
+class TaskCommentsView(APIView):
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get(self, request, task_id):
+        task = get_object_or_404(Task, id=task_id)
+
+        # Check if user is a board member
+        if request.user not in task.board.members.all():
+            return Response({'detail': 'Forbidden'}, status=status.HTTP_403_FORBIDDEN)
+
+        comments = task.comments.all().order_by('created_at')
+        serializer = CommentSerializer(comments, many=True)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
+    def post(self, request, task_id):
+        task = get_object_or_404(Task, id=task_id)
+
+        if request.user not in task.board.members.all():
+            return Response({'detail': 'Forbidden'}, status=status.HTTP_403_FORBIDDEN)
+
+        content = request.data.get('content', '').strip()
+        if not content:
+            return Response({'detail': 'Content darf nicht leer sein.'}, status=status.HTTP_400_BAD_REQUEST)
+
+        comment = Comment.objects.create(
+            task=task,
+            author=request.user,
+            content=content
+        )
+        serializer = CommentSerializer(comment)
+        return Response(serializer.data, status=status.HTTP_201_CREATED)

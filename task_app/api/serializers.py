@@ -1,6 +1,6 @@
 from rest_framework import serializers
 from django.contrib.auth.models import User
-from .models import Task, Board
+from .models import Task, Board, Comment
 
 
 class UserSummarySerializer(serializers.ModelSerializer):
@@ -97,3 +97,15 @@ class TaskSerializer(serializers.ModelSerializer):
             'id', 'board', 'title', 'description', 'status', 'priority',
             'assignee', 'reviewer', 'due_date', 'comments_count'
         ]
+
+
+class CommentSerializer(serializers.ModelSerializer):
+    author = serializers.SerializerMethodField()
+
+    class Meta:
+        model = Comment
+        fields = ['id', 'created_at', 'author', 'content']
+        read_only_fields = ['id', 'created_at', 'author']
+
+    def get_author(self, obj):
+        return f"{obj.author.first_name} {obj.author.last_name}".strip()

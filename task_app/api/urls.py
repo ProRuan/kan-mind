@@ -1,5 +1,5 @@
 from django.urls import path
-from .views import TaskCreateView, AssignedToMeTasksView, ReviewingTasksView, TaskDetailView
+from .views import TaskCreateView, AssignedToMeTasksView, ReviewingTasksView, TaskDetailView, TaskCommentsView
 
 # rename task_id to id!
 urlpatterns = [
@@ -7,6 +7,8 @@ urlpatterns = [
     path('assigned-to-me/', AssignedToMeTasksView.as_view(), name='assigned-to-me'),
     path('reviewing/', ReviewingTasksView.as_view(), name='reviewing-tasks'),
     path('<int:task_id>/', TaskDetailView.as_view(), name='task-detail'),
+    path('<int:task_id>/comments/',
+         TaskCommentsView.as_view(), name='task-comments'),
 ]
 
 # TaskDetailView
