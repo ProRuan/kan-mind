@@ -123,3 +123,17 @@ class TaskCommentsView(APIView):
         )
         serializer = CommentSerializer(comment)
         return Response(serializer.data, status=status.HTTP_201_CREATED)
+
+
+class CommentDeleteView(APIView):
+    permission_classes = [permissions.IsAuthenticated]
+
+    def delete(self, request, task_id, comment_id):
+        task = get_object_or_404(Task, id=task_id)
+        comment = get_object_or_404(Comment, id=comment_id, task=task)
+
+        if comment.author != request.user:
+            return Response({'detail': 'Forbidden'}, status=status.HTTP_403_FORBIDDEN)
+
+        comment.delete()
+        return Response(status=status.HTTP_204_NO_CONTENT)
