@@ -1,49 +1,35 @@
-# test 1
-from rest_framework.decorators import api_view
-from rest_framework.response import Response
-
-# test 2
-from rest_framework import generics, mixins
+from rest_framework import permissions, generics
 from .models import Task
-from .serializers import TaskSerializer, TaskOverviewSerializer
+from .serializers import TaskCreateSerializer, TaskSerializer
 
-
-# class TaskListAPIView(ListAPIView):
-#     queryset = Task.objects.all()
-
-# delete!
-@api_view(['GET'])
-def task_test_view(request):
-    return Response({'request': 'task test view works'})
-
-
-class TaskListView(generics.ListAPIView):
-    queryset = Task.objects.all().select_related('assignee', 'reviewer')
-    serializer_class = TaskSerializer
+# GET
+from rest_framework.views import APIView
+from rest_framework.permissions import IsAuthenticated
+from rest_framework.response import Response
+from rest_framework import status
 
 
 class TaskCreateView(generics.CreateAPIView):
     queryset = Task.objects.all()
-    serializer_class = TaskSerializer
+    serializer_class = TaskCreateSerializer
+    permission_classes = [permissions.IsAuthenticated]
 
 
-class TasksView(mixins.ListModelMixin, mixins.CreateModelMixin, generics.GenericAPIView):
-    queryset = Task.objects.all()
-    serializer_class = TaskSerializer
+class AssignedToMeTasksView(APIView):
+    permission_classes = [IsAuthenticated]
 
-    def get_serializer_class(self):
-        if self.request.method == 'GET':
-            return TaskOverviewSerializer  # shows limited fields
-        return TaskSerializer  # for POST (full task)
-
-    def get(self, request, *args, **kwargs):
-        return self.list(request, *args, **kwargs)
-
-    def post(self, request, *args, **kwargs):
-        return self.create(request, *args, **kwargs)
+    def get(self, request):
+        user = request.user
+        tasks = Task.objects.filter(assignee=user)
+        serializer = TaskSerializer(tasks, many=True)
+        return Response(serializer.data, status=status.HTTP_200_OK)
 
 
-class TaskDetailView(generics.RetrieveUpdateDestroyAPIView):
-    queryset = Task.objects.all()
-    serializer_class = TaskSerializer
-    lookup_field = 'id'  # because your URL uses {task_id}
+class ReviewingTasksView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        user = request.user
+        tasks = Task.objects.filter(reviewer=user)
+        serializer = TaskSerializer(tasks, many=True)
+        return Response(serializer.data, status=status.HTTP_200_OK)
