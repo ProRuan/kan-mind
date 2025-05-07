@@ -6,3 +6,6 @@ urlpatterns = [
     path('', BoardListCreateView.as_view(), name='board-list-create'),
     path('<int:board_id>/', BoardDetailView.as_view(), name='board-detail'),
 ]
+
+
+# check owners and members ...
