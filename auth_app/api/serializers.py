@@ -62,3 +62,14 @@ class LoginSerializer(serializers.Serializer):
 
         data["user"] = user
         return data
+
+
+class UserEmailCheckSerializer(serializers.ModelSerializer):
+    fullname = serializers.SerializerMethodField()
+
+    class Meta:
+        model = User
+        fields = ['id', 'email', 'fullname']
+
+    def get_fullname(self, obj):
+        return f"{obj.first_name} {obj.last_name}".strip()

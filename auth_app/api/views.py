@@ -5,9 +5,10 @@ from rest_framework.response import Response
 # test 2
 from rest_framework.views import APIView
 from rest_framework.response import Response
-from rest_framework import status
+from rest_framework import permissions, status
 from rest_framework.authtoken.models import Token
-from .serializers import RegistrationSerializer, LoginSerializer
+from .serializers import RegistrationSerializer, LoginSerializer, UserEmailCheckSerializer
+from django.contrib.auth.models import User
 
 
 # delete!
@@ -46,3 +47,20 @@ class LoginView(APIView):
             }, status=status.HTTP_200_OK)
 
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+class EmailCheckView(APIView):
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get(self, request):
+        email = request.query_params.get('email')
+
+        if not email:
+            return Response({"detail": "Email query parameter is required."}, status=status.HTTP_400_BAD_REQUEST)
+
+        try:
+            user = User.objects.get(email=email)
+            serializer = UserEmailCheckSerializer(user)
+            return Response(serializer.data, status=status.HTTP_200_OK)
+        except User.DoesNotExist:
+            return Response({}, status=status.HTTP_200_OK)
