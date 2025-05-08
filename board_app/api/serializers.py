@@ -1,6 +1,7 @@
 from django.contrib.auth.models import User
 from rest_framework import serializers
-from .models import Board, Task
+from .models import Board
+from task_app.api.models import Task
 
 
 class BoardOverviewSerializer(serializers.ModelSerializer):
@@ -59,13 +60,29 @@ class UserShortSerializer(serializers.ModelSerializer):
 class TaskSerializer(serializers.ModelSerializer):
     assignee = UserShortSerializer(read_only=True)
     reviewer = UserShortSerializer(read_only=True)
+    comments_count = serializers.SerializerMethodField()  # ✅ required!
 
     class Meta:
         model = Task
         fields = [
-            'id', 'title', 'description', 'status', 'priority',
+            'id', 'board', 'title', 'description', 'status', 'priority',
             'assignee', 'reviewer', 'due_date', 'comments_count'
         ]
+
+    def get_comments_count(self, obj):
+        return obj.comments.count()  # ✅ safe because of related_name='comments'
+
+
+# class TaskSerializer(serializers.ModelSerializer):
+#     assignee = UserShortSerializer(read_only=True)
+#     reviewer = UserShortSerializer(read_only=True)
+
+#     class Meta:
+#         model = Task
+#         fields = [
+#             'id', 'title', 'description', 'status', 'priority',
+#             'assignee', 'reviewer', 'due_date', 'comments_count'
+#         ]
 
 
 class BoardDetailSerializer(serializers.ModelSerializer):

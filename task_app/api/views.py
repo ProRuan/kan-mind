@@ -50,10 +50,11 @@ class TaskDetailView(APIView):
         if request.user not in task.board.members.all():
             return Response({"detail": "Sie sind kein Mitglied dieses Boards."}, status=status.HTTP_403_FORBIDDEN)
 
-        if "board" in request.data:
-            return Response({"detail": "Die Board-ID darf nicht geändert werden."}, status=status.HTTP_400_BAD_REQUEST)
+        data = request.data.copy()  # moved this here
 
-        data = request.data.copy()
+        # if "board" in request.data:
+        if "board" in data and str(data["board"]) != str(task.board.id):
+            return Response({"detail": "Die Board-ID darf nicht geändert werden."}, status=status.HTTP_400_BAD_REQUEST)
 
         if "assignee_id" in data:
             try:

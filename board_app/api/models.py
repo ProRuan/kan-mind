@@ -8,11 +8,5 @@ class Board(models.Model):
         User, related_name='owned_boards', on_delete=models.CASCADE)
     members = models.ManyToManyField(User, related_name='boards')
 
-
-class Task(models.Model):
-    board = models.ForeignKey(
-        Board, related_name='tasks', on_delete=models.CASCADE)
-    status = models.CharField(max_length=20, choices=[
-                              ('to-do', 'To Do'), ('done', 'Done')])
-    priority = models.CharField(max_length=20, choices=[(
-        'low', 'Low'), ('medium', 'Medium'), ('high', 'High')])
+    def __str__(self):
+        return self.title

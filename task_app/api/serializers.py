@@ -66,6 +66,10 @@ class TaskCreateSerializer(serializers.ModelSerializer):
         reviewer = User.objects.filter(
             id=reviewer_id).first() if reviewer_id else None
 
+        # ✅ Inject created_by from the request
+        user = self.context['request'].user
+        validated_data['created_by'] = user
+
         task = Task.objects.create(
             **validated_data,
             assignee=assignee,
