@@ -89,7 +89,8 @@ class UserShortSerializer(serializers.ModelSerializer):
 class TaskSerializer(serializers.ModelSerializer):
     assignee = UserShortSerializer(read_only=True)
     reviewer = UserShortSerializer(read_only=True)
-    comments_count = serializers.IntegerField(read_only=True)
+    # comments_count = serializers.IntegerField(read_only=True)
+    comments_count = serializers.SerializerMethodField()  # comments fixed
 
     class Meta:
         model = Task
@@ -97,6 +98,10 @@ class TaskSerializer(serializers.ModelSerializer):
             'id', 'board', 'title', 'description', 'status', 'priority',
             'assignee', 'reviewer', 'due_date', 'comments_count'
         ]
+
+    # comments fixed
+    def get_comments_count(self, obj):
+        return obj.comments.count()
 
 
 class CommentSerializer(serializers.ModelSerializer):
