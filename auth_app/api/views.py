@@ -10,6 +10,9 @@ from rest_framework.authtoken.models import Token
 from .serializers import RegistrationSerializer, LoginSerializer, UserEmailCheckSerializer
 from django.contrib.auth.models import User
 
+# registration and login
+from rest_framework.permissions import AllowAny
+
 
 # delete!
 @api_view(['GET'])
@@ -18,6 +21,8 @@ def auth_test_view(request):
 
 
 class RegistrationView(APIView):
+    permission_classes = [AllowAny]
+
     def post(self, request):
         serializer = RegistrationSerializer(data=request.data)
         if serializer.is_valid():
@@ -33,6 +38,8 @@ class RegistrationView(APIView):
 
 
 class LoginView(APIView):
+    permission_classes = [AllowAny]
+
     def post(self, request):
         serializer = LoginSerializer(data=request.data)
         if serializer.is_valid():
