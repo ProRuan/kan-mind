@@ -1,8 +1,3 @@
-"""
-Views for managing boards, including listing, creation,
-detail retrieval, updating, and deletion.
-"""
-
 # 1. Third-party suppliers
 from django.shortcuts import get_object_or_404
 from rest_framework import status
@@ -85,23 +80,28 @@ class BoardDetailView(APIView):
 
     def patch(self, request, board_id):
         """
-        Partially update board title or members.
-        Only accessible by board members or owner.
+        Partially update board title or members. Accessible by board members or owner only.
         """
         board = self.get_board(board_id, request.user)
         if not board:
-            return Response(
-                {"detail": "You do not have permission to update this board."},
-                status=status.HTTP_403_FORBIDDEN
-            )
+            return self._get_permission_response()
 
         serializer = BoardUpdateSerializer(
-            board, data=request.data, partial=True
-        )
+            board, data=request.data, partial=True)
         if serializer.is_valid():
-            updated_board = serializer.save()
-            return Response(BoardUpdateSerializer(updated_board).data, status=status.HTTP_200_OK)
+            return self._get_success_response(serializer)
+
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+    def _get_permission_response(self):
+        return Response(
+            {"detail": "You do not have permission to update this board."},
+            status=status.HTTP_403_FORBIDDEN
+        )
+
+    def _get_success_response(self, serializer):
+        updated_board = serializer.save()
+        return Response(BoardUpdateSerializer(updated_board).data, status=status.HTTP_200_OK)
 
     def delete(self, request, board_id):
         """

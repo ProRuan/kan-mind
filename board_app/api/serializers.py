@@ -1,7 +1,3 @@
-"""
-Serializers for the board_app.
-"""
-
 # 1. Third-party suppliers
 from django.contrib.auth.models import User
 from rest_framework import serializers

@@ -1,12 +1,7 @@
 """
-URL configuration for the task-related endpoints.
-
-This module defines the URL patterns for creating, retrieving, and managing tasks,
-including personal assignments, reviewing tasks, and handling task comments.
-It uses Django's path() function to map requests to class-based views.
-
-Namespace:
-    task_app
+URL configuration for task-related endpoints.
+Defines URL patterns for creating, retrieving, and managing tasks,
+including assignments, reviews, and task comments.
 
 Available endpoints:
     - / → TaskCreateView

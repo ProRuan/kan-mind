@@ -1,12 +1,7 @@
 """
-URL configuration for the board-related endpoints.
-
-This module defines the URL patterns for listing, creating, retrieving,
-updating, and deleting boards. It uses Django's path() function to map
-requests to class-based views.
-
-Namespace:
-    board_app
+URL configuration for board-related endpoints.
+Defines URL patterns for listing, creating,
+retrieving, updating, and deleting boards.
 
 Available endpoints:
     - / → BoardListCreateView

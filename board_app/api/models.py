@@ -1,8 +1,3 @@
-"""
-Models for the board application.
-Defines the structure and constraints for the Board entity.
-"""
-
 # Third-party suppliers
 from django.contrib.auth.models import User
 from django.core.validators import MinLengthValidator
