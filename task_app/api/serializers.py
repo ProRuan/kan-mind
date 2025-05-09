@@ -1,16 +1,9 @@
-"""
-Serializers for task_app.
-
-This module provides serializers for Task, Comment, and User summary representations,
-including creation and validation logic for tasks.
-"""
-
 # 1. Third-party suppliers
 from django.contrib.auth.models import User
 from rest_framework import serializers
 
 # 2. Local imports
-from .models import Task, Board, Comment
+from .models import Task, Comment
 
 
 class UserSummarySerializer(serializers.ModelSerializer):
@@ -49,38 +42,34 @@ class TaskCreateSerializer(serializers.ModelSerializer):
         ]
 
     def get_comments_count(self, obj):
-        return obj.comments.count() if hasattr(obj, 'comments') else 0
+        if hasattr(obj, 'comments'):
+            return obj.comments.count()
+        return 0
 
     def validate(self, data):
         user = self.context['request'].user
         board = data.get('board')
-        assignee_id = data.get('assignee_id')
-        reviewer_id = data.get('reviewer_id')
 
-        def is_member(user_id):
-            return board.members.filter(id=user_id).exists()
-
-        if not is_member(user.id):
-            raise serializers.ValidationError(
-                "You are not a member of this board.")
-        if assignee_id and not is_member(assignee_id):
-            raise serializers.ValidationError(
-                "Assignee must be a member of the board.")
-        if reviewer_id and not is_member(reviewer_id):
-            raise serializers.ValidationError(
-                "Reviewer must be a member of the board.")
-
+        self._validate_board_membership(board, user.id, data.get(
+            'assignee_id'), data.get('reviewer_id'))
         return data
 
+    def _validate_board_membership(self, board, creator_id, assignee_id, reviewer_id):
+        checks = [
+            (creator_id, "You are not a member of this board."),
+            (assignee_id, "Assignee must be a member of the board."),
+            (reviewer_id, "Reviewer must be a member of the board."),
+        ]
+
+        for user_id, error in checks:
+            if user_id and not board.members.filter(id=user_id).exists():
+                raise serializers.ValidationError(error)
+
     def create(self, validated_data):
-        assignee_id = validated_data.pop('assignee_id', None)
-        reviewer_id = validated_data.pop('reviewer_id', None)
-
-        assignee = User.objects.filter(
-            id=assignee_id).first() if assignee_id else None
-        reviewer = User.objects.filter(
-            id=reviewer_id).first() if reviewer_id else None
-
+        assignee = self._get_user_from_id(
+            validated_data.pop('assignee_id', None))
+        reviewer = self._get_user_from_id(
+            validated_data.pop('reviewer_id', None))
         validated_data['created_by'] = self.context['request'].user
 
         return Task.objects.create(
@@ -88,6 +77,9 @@ class TaskCreateSerializer(serializers.ModelSerializer):
             assignee=assignee,
             reviewer=reviewer
         )
+
+    def _get_user_from_id(self, user_id):
+        return User.objects.filter(id=user_id).first() if user_id else None
 
 
 class UserShortSerializer(serializers.ModelSerializer):
