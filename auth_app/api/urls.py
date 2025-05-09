@@ -1,11 +1,6 @@
 """
-URL configuration for the authentication-related endpoints.
-
-This module defines the URL patterns for user registration, login, and email checking.
-It uses Django's path() function to route requests to the appropriate class-based views.
-
-Namespace:
-    auth_app
+URL configuration for authentication-related endpoints.
+Defines URL patterns for user registration, login, and email checking.
 
 Available endpoints:
     - /registration/ → RegistrationView

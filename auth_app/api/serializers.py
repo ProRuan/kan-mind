@@ -1,9 +1,3 @@
-"""
-auth_app.api.serializers
-
-Serializers for user registration, login, and email verification.
-"""
-
 # Third-party imports
 from django.contrib.auth import authenticate, get_user_model
 from django.contrib.auth.password_validation import validate_password

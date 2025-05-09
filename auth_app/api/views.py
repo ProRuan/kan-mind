@@ -1,4 +1,3 @@
-
 # 1. Standard library
 import re
 
@@ -12,54 +11,21 @@ from rest_framework.views import APIView
 
 # 3. Local imports
 from .serializers import (
-    RegistrationSerializer,
     LoginSerializer,
+    RegistrationSerializer,
     UserEmailCheckSerializer,
 )
 
 
-class RegistrationView(APIView):
+class BaseAuthView(APIView):
     """
-    Handle user registration and return auth token with user info.
+    Base class for user authentication and registration.
     """
-    permission_classes = [AllowAny]
 
-    def post(self, request):
-        serializer = RegistrationSerializer(data=request.data)
-        if not serializer.is_valid():
-            return self._error_response(serializer)
-
-        user = serializer.save()
-        return self._success_response(user, status.HTTP_201_CREATED)
-
-    def _success_response(self, user, code):
-        token, _ = Token.objects.get_or_create(user=user)
-        return Response({
-            "token": token.key,
-            "fullname": f"{user.first_name} {user.last_name}".strip(),
-            "email": user.email,
-            "user_id": user.id
-        }, status=code)
-
-    def _error_response(self, serializer):
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
-
-class LoginView(APIView):
-    """
-    Authenticate a user and return auth token with user info.
-    """
-    permission_classes = [AllowAny]
-
-    def post(self, request):
-        serializer = LoginSerializer(data=request.data)
-        if not serializer.is_valid():
-            return self._error_response(serializer)
-
-        user = serializer.validated_data["user"]
-        return self._success_response(user, status.HTTP_200_OK)
-
-    def _success_response(self, user, code):
+    def _get_success_response(self, user, code):
+        """
+        Generate success response with user info and auth token.
+        """
         token, provided = Token.objects.get_or_create(user=user)
         return Response({
             "token": token.key,
@@ -68,8 +34,41 @@ class LoginView(APIView):
             "user_id": user.id
         }, status=code)
 
-    def _error_response(self, serializer):
+    def _get_error_response(self, serializer):
+        """
+        Generate error response for invalid serializer data.
+        """
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+class RegistrationView(BaseAuthView):
+    """
+    Handle user registration and return auth token with user info.
+    """
+    permission_classes = [AllowAny]
+
+    def post(self, request):
+        serializer = RegistrationSerializer(data=request.data)
+        if not serializer.is_valid():
+            return self._get_error_response(serializer)
+
+        user = serializer.save()
+        return self._get_success_response(user, status.HTTP_201_CREATED)
+
+
+class LoginView(BaseAuthView):
+    """
+    Authenticate a user and return auth token with user info.
+    """
+    permission_classes = [AllowAny]
+
+    def post(self, request):
+        serializer = LoginSerializer(data=request.data)
+        if not serializer.is_valid():
+            return self._get_error_response(serializer)
+
+        user = serializer.validated_data["user"]
+        return self._get_success_response(user, status.HTTP_200_OK)
 
 
 class EmailCheckView(APIView):
