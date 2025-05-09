@@ -1,7 +1,4 @@
 """
-auth_app.api.urls
------------------
-
 URL configuration for the authentication-related endpoints.
 
 This module defines the URL patterns for user registration, login, and email checking.

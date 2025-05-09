@@ -1,32 +1,26 @@
-from django.urls import path
-from .views import BoardListCreateView, BoardDetailView
+"""
+URL configuration for board_app.
 
-# rename board_id to id!
+Includes endpoints for listing, creating,
+retrieving, updating, and deleting boards.
+
+Namespace:
+    board_app
+
+Available endpoints:
+    - / → BoardListCreateView
+    - /<int:board_id>/ → BoardDetailView
+"""
+
+# 1. Third-party suppliers
+from django.urls import path
+
+# 2. Local imports
+from .views import BoardDetailView, BoardListCreateView
+
+app_name = "board_app"
+
 urlpatterns = [
     path('', BoardListCreateView.as_view(), name='board-list-create'),
     path('<int:board_id>/', BoardDetailView.as_view(), name='board-detail'),
 ]
-
-
-# check owners and members ...
-
-
-# DELETE and MOVE!!!
-
-# auth_app (1/3) ...
-# --------
-# errors (0/0) - check
-# validation, default, required (0/3) ...
-# clean coding and documentation (0/2) ...
-# English error texts (0/1) ...
-
-
-# clean coding (1/3) ...
-
-
-# for copying
-# -----------
-# errors (0/?) ...
-# validation, default, required (0/3) ...
-# clean coding and documentation (0/2) ...
-# English error texts (0/1) ...

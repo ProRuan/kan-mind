@@ -1,10 +1,20 @@
+"""
+Serializers for the board_app.
+"""
+
+# 1. Third-party suppliers
 from django.contrib.auth.models import User
 from rest_framework import serializers
+
+# 2. Local imports
 from .models import Board
 from task_app.api.models import Task
 
 
 class BoardOverviewSerializer(serializers.ModelSerializer):
+    """
+    Overview serializer showing board summary statistics.
+    """
     member_count = serializers.SerializerMethodField()
     ticket_count = serializers.SerializerMethodField()
     tasks_to_do_count = serializers.SerializerMethodField()
@@ -13,8 +23,10 @@ class BoardOverviewSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Board
-        fields = ['id', 'title', 'owner_id', 'member_count',
-                  'ticket_count', 'tasks_to_do_count', 'tasks_high_prio_count']
+        fields = [
+            'id', 'title', 'owner_id', 'member_count',
+            'ticket_count', 'tasks_to_do_count', 'tasks_high_prio_count'
+        ]
 
     def get_member_count(self, board):
         return board.members.count()
@@ -30,8 +42,13 @@ class BoardOverviewSerializer(serializers.ModelSerializer):
 
 
 class BoardCreateSerializer(serializers.ModelSerializer):
+    """
+    Serializer for creating a new board.
+    """
+    title = serializers.CharField(required=True, max_length=255)
     members = serializers.PrimaryKeyRelatedField(
-        queryset=User.objects.all(), many=True)
+        queryset=User.objects.all(), many=True, required=True
+    )
 
     class Meta:
         model = Board
@@ -46,11 +63,13 @@ class BoardCreateSerializer(serializers.ModelSerializer):
 
 
 class UserShortSerializer(serializers.ModelSerializer):
+    """
+    Short user serializer with ID, email and full name.
+    """
     fullname = serializers.SerializerMethodField()
 
     class Meta:
         model = User
-        # model = CustomUser
         fields = ['id', 'email', 'fullname']
 
     def get_fullname(self, obj):
@@ -58,9 +77,12 @@ class UserShortSerializer(serializers.ModelSerializer):
 
 
 class TaskSerializer(serializers.ModelSerializer):
+    """
+    Serializer for listing tasks in a board.
+    """
     assignee = UserShortSerializer(read_only=True)
     reviewer = UserShortSerializer(read_only=True)
-    comments_count = serializers.SerializerMethodField()  # ✅ required!
+    comments_count = serializers.SerializerMethodField()
 
     class Meta:
         model = Task
@@ -70,38 +92,35 @@ class TaskSerializer(serializers.ModelSerializer):
         ]
 
     def get_comments_count(self, obj):
-        return obj.comments.count()  # ✅ safe because of related_name='comments'
-
-
-# class TaskSerializer(serializers.ModelSerializer):
-#     assignee = UserShortSerializer(read_only=True)
-#     reviewer = UserShortSerializer(read_only=True)
-
-#     class Meta:
-#         model = Task
-#         fields = [
-#             'id', 'title', 'description', 'status', 'priority',
-#             'assignee', 'reviewer', 'due_date', 'comments_count'
-#         ]
+        return obj.comments.count()
 
 
 class BoardDetailSerializer(serializers.ModelSerializer):
+    """
+    Full board detail view including members and tasks.
+    """
     members = UserShortSerializer(many=True, read_only=True)
     tasks = serializers.SerializerMethodField()
+    owner_id = serializers.IntegerField(source='owner.id', read_only=True)
 
     class Meta:
         model = Board
         fields = ['id', 'title', 'owner_id', 'members', 'tasks']
 
     def get_tasks(self, obj):
-        tasks = self.context.get('tasks', Task.objects.none())
+        tasks = self.context.get('tasks', Task.objects.filter(board=obj))
         return TaskSerializer(tasks, many=True).data
 
 
 class BoardUpdateSerializer(serializers.ModelSerializer):
+    """
+    Serializer for updating a board.
+    """
+    title = serializers.CharField(
+        required=False, allow_blank=False, max_length=255)
     members = serializers.PrimaryKeyRelatedField(
-        queryset=User.objects.all(), many=True, required=False)
-    # queryset=CustomUser.objects.all(), many=True, required=False)
+        queryset=User.objects.all(), many=True, required=False
+    )
 
     class Meta:
         model = Board
