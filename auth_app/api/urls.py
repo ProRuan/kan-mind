@@ -1,28 +1,47 @@
+"""
+auth_app.api.urls
+-----------------
+
+URL configuration for the authentication-related endpoints.
+
+This module defines the URL patterns for user registration, login, and email checking.
+It uses Django's path() function to route requests to the appropriate class-based views.
+
+Namespace:
+    auth_app
+
+Available endpoints:
+    - /registration/ → RegistrationView
+    - /login/ → LoginView
+    - /email-check/ → EmailCheckView
+"""
+
+# 1. Third-party suppliers
 from django.urls import path
-from .views import auth_test_view, RegistrationView, LoginView, EmailCheckView
+
+# 2. Local imports
+from .views import EmailCheckView, LoginView, RegistrationView
+
+app_name = 'auth_app'
 
 urlpatterns = [
-    path('', auth_test_view, name='auth-test'),  # delete!
     path('registration/', RegistrationView.as_view(), name='registration'),
     path('login/', LoginView.as_view(), name='login'),
     path('email-check/', EmailCheckView.as_view(), name='email-check'),
 ]
 
-# POST "api/registration" (3/3)
-#   - request body - check
-#   - success response - check
-#   - status codes (3/3) - check
+# auth_app (1/3) ...
+# --------
+# errors (0/0) - check
+# validation, default, required (0/3) ...
+# clean coding and documentation (0/2) ...
 
 
-# POST "api/login" (3/3)
-#   - request body - check
-#   - success response - check
-#   - status codes (3/3) - check
+# clean coding (1/3) ...
 
 
-# POST "api/email-check" (2/3)
-#   - request body - check
-#   - success response - check
-#   - status codes (1/4) - ...
-
-# clean coding (0/2) ...
+# for copying
+# -----------
+# errors (0/?) ...
+# validation, default, required (0/3) ...
+# clean coding and documentation (0/2) ...
