@@ -1,9 +1,20 @@
-from rest_framework import serializers
+"""
+Serializers for task_app.
+
+This module provides serializers for Task, Comment, and User summary representations,
+including creation and validation logic for tasks.
+"""
+
+# 1. Third-party suppliers
 from django.contrib.auth.models import User
+from rest_framework import serializers
+
+# 2. Local imports
 from .models import Task, Board, Comment
 
 
 class UserSummarySerializer(serializers.ModelSerializer):
+    """Serializer for summarizing User data."""
     fullname = serializers.SerializerMethodField()
 
     class Meta:
@@ -15,10 +26,16 @@ class UserSummarySerializer(serializers.ModelSerializer):
 
 
 class TaskCreateSerializer(serializers.ModelSerializer):
+    """
+    Serializer for creating a Task, including user IDs for assignee and reviewer.
+    Performs board membership validation.
+    """
     assignee_id = serializers.IntegerField(
-        required=False, allow_null=True, write_only=True)
+        required=False, allow_null=True, write_only=True
+    )
     reviewer_id = serializers.IntegerField(
-        required=False, allow_null=True, write_only=True)
+        required=False, allow_null=True, write_only=True
+    )
     assignee = UserSummarySerializer(read_only=True)
     reviewer = UserSummarySerializer(read_only=True)
     comments_count = serializers.SerializerMethodField()
@@ -26,13 +43,13 @@ class TaskCreateSerializer(serializers.ModelSerializer):
     class Meta:
         model = Task
         fields = [
-            'id', 'board', 'title', 'description',
-            'status', 'priority', 'assignee_id', 'reviewer_id',
-            'assignee', 'reviewer', 'due_date', 'comments_count'
+            'id', 'board', 'title', 'description', 'status', 'priority',
+            'assignee_id', 'reviewer_id', 'assignee', 'reviewer',
+            'due_date', 'comments_count'
         ]
 
     def get_comments_count(self, obj):
-        return 0  # Replace with real logic if you add comments later
+        return obj.comments.count() if hasattr(obj, 'comments') else 0
 
     def validate(self, data):
         user = self.context['request'].user
@@ -40,20 +57,18 @@ class TaskCreateSerializer(serializers.ModelSerializer):
         assignee_id = data.get('assignee_id')
         reviewer_id = data.get('reviewer_id')
 
-        # check this!
-        # Check user is in board
-        if not board.members.filter(id=user.id).exists():
-            raise serializers.ValidationError(
-                "Du bist kein Mitglied dieses Boards.")
+        def is_member(user_id):
+            return board.members.filter(id=user_id).exists()
 
-        # check this!
-        # Check assignee and reviewer are in board
-        if assignee_id and not board.members.filter(id=assignee_id).exists():
+        if not is_member(user.id):
             raise serializers.ValidationError(
-                "Assignee muss Mitglied des Boards sein.")
-        if reviewer_id and not board.members.filter(id=reviewer_id).exists():
+                "You are not a member of this board.")
+        if assignee_id and not is_member(assignee_id):
             raise serializers.ValidationError(
-                "Reviewer muss Mitglied des Boards sein.")
+                "Assignee must be a member of the board.")
+        if reviewer_id and not is_member(reviewer_id):
+            raise serializers.ValidationError(
+                "Reviewer must be a member of the board.")
 
         return data
 
@@ -66,20 +81,17 @@ class TaskCreateSerializer(serializers.ModelSerializer):
         reviewer = User.objects.filter(
             id=reviewer_id).first() if reviewer_id else None
 
-        # ✅ Inject created_by from the request
-        user = self.context['request'].user
-        validated_data['created_by'] = user
+        validated_data['created_by'] = self.context['request'].user
 
-        task = Task.objects.create(
+        return Task.objects.create(
             **validated_data,
             assignee=assignee,
             reviewer=reviewer
         )
-        return task
 
 
-# GET
 class UserShortSerializer(serializers.ModelSerializer):
+    """Short version of user serializer with full name."""
     fullname = serializers.SerializerMethodField()
 
     class Meta:
@@ -91,10 +103,12 @@ class UserShortSerializer(serializers.ModelSerializer):
 
 
 class TaskSerializer(serializers.ModelSerializer):
+    """
+    Read-only serializer for Task including assignee, reviewer, and comment count.
+    """
     assignee = UserShortSerializer(read_only=True)
     reviewer = UserShortSerializer(read_only=True)
-    # comments_count = serializers.IntegerField(read_only=True)
-    comments_count = serializers.SerializerMethodField()  # comments fixed
+    comments_count = serializers.SerializerMethodField()
 
     class Meta:
         model = Task
@@ -103,12 +117,12 @@ class TaskSerializer(serializers.ModelSerializer):
             'assignee', 'reviewer', 'due_date', 'comments_count'
         ]
 
-    # comments fixed
     def get_comments_count(self, obj):
         return obj.comments.count()
 
 
 class CommentSerializer(serializers.ModelSerializer):
+    """Serializer for task comments."""
     author = serializers.SerializerMethodField()
 
     class Meta:
