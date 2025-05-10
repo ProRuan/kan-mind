@@ -1,4 +1,4 @@
-# 1. Third-party suppliers
+# 1. Third-party imports
 from django.shortcuts import get_object_or_404
 from rest_framework import status
 from rest_framework.permissions import IsAuthenticated
@@ -10,7 +10,7 @@ from .serializers import (
     BoardCreateSerializer,
     BoardDetailSerializer,
     BoardOverviewSerializer,
-    BoardUpdateSerializer
+    BoardUpdateSerializer,
 )
 from board_app.models import Board
 from task_app.models import Task
@@ -18,7 +18,7 @@ from task_app.models import Task
 
 class BoardListCreateView(APIView):
     """
-    API endpoint to list all boards the user belongs to or owns,
+    API view to retrieve a list of boards the user belongs to or owns,
     and to create a new board.
     """
     permission_classes = [IsAuthenticated]
@@ -26,6 +26,9 @@ class BoardListCreateView(APIView):
     def get(self, request):
         """
         Return all boards where the user is a member or the owner.
+
+        Returns:
+            Response: A list of serialized boards.
         """
         user = request.user
         boards = Board.objects.filter(
@@ -36,7 +39,10 @@ class BoardListCreateView(APIView):
 
     def post(self, request):
         """
-        Create a new board. The current user will be set as the owner.
+        Create a new board with the current user as the owner.
+
+        Returns:
+            Response: The created board in overview format or validation errors.
         """
         serializer = BoardCreateSerializer(
             data=request.data, context={'request': request}
@@ -50,13 +56,20 @@ class BoardListCreateView(APIView):
 
 class BoardDetailView(APIView):
     """
-    API endpoint to retrieve, update, or delete a specific board.
+    API view to retrieve, update, or delete a specific board.
     """
     permission_classes = [IsAuthenticated]
 
     def get_board(self, board_id, user):
         """
-        Helper method to fetch board with access check.
+        Fetch the board if the user is authorized.
+
+        Args:
+            board_id (int): ID of the board.
+            user (User): Authenticated user.
+
+        Returns:
+            Board or None: The board object if authorized, otherwise None.
         """
         board = get_object_or_404(Board, id=board_id)
         if user != board.owner and user not in board.members.all():
@@ -65,14 +78,14 @@ class BoardDetailView(APIView):
 
     def get(self, request, board_id):
         """
-        Retrieve full details of a board including members and tasks.
+        Retrieve full board details including members and tasks.
+
+        Returns:
+            Response: Serialized board details or 403 if unauthorized.
         """
         board = self.get_board(board_id, request.user)
         if not board:
-            return Response(
-                {"detail": "You do not have permission to access this board."},
-                status=status.HTTP_403_FORBIDDEN
-            )
+            return self._get_permission_response()
 
         tasks = Task.objects.filter(board=board)
         serializer = BoardDetailSerializer(board, context={'tasks': tasks})
@@ -80,33 +93,33 @@ class BoardDetailView(APIView):
 
     def patch(self, request, board_id):
         """
-        Partially update board title or members. Accessible by board members or owner only.
+        Partially update board title or members.
+
+        Only accessible by board owner or members.
+
+        Returns:
+            Response: Serialized updated board or 403 if unauthorized.
         """
         board = self.get_board(board_id, request.user)
         if not board:
             return self._get_permission_response()
 
         serializer = BoardUpdateSerializer(
-            board, data=request.data, partial=True)
+            board, data=request.data, partial=True
+        )
         if serializer.is_valid():
             return self._get_success_response(serializer)
 
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-    def _get_permission_response(self):
-        return Response(
-            {"detail": "You do not have permission to update this board."},
-            status=status.HTTP_403_FORBIDDEN
-        )
-
-    def _get_success_response(self, serializer):
-        updated_board = serializer.save()
-        return Response(BoardUpdateSerializer(updated_board).data, status=status.HTTP_200_OK)
-
     def delete(self, request, board_id):
         """
-        Delete the board.
-        Only the owner of the board can perform this action.
+        Delete the specified board.
+
+        Only the owner is allowed to delete a board.
+
+        Returns:
+            Response: 204 No Content on success, 403 if unauthorized.
         """
         board = get_object_or_404(Board, id=board_id)
         if board.owner != request.user:
@@ -117,3 +130,31 @@ class BoardDetailView(APIView):
 
         board.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
+
+    def _get_permission_response(self):
+        """
+        Return a standard permission denied response.
+
+        Returns:
+            Response: 403 Forbidden.
+        """
+        return Response(
+            {"detail": "You do not have permission to access or modify this board."},
+            status=status.HTTP_403_FORBIDDEN
+        )
+
+    def _get_success_response(self, serializer):
+        """
+        Return the successful update response.
+
+        Args:
+            serializer (Serializer): A valid serializer instance.
+
+        Returns:
+            Response: Serialized updated board data.
+        """
+        updated_board = serializer.save()
+        return Response(
+            BoardUpdateSerializer(updated_board).data,
+            status=status.HTTP_200_OK
+        )

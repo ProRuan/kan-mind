@@ -38,11 +38,12 @@ class RegistrationSerializer(serializers.ModelSerializer):
 
     def validate_email(self, value):
         """
-        Ensure email is unique.
+        Ensure the email is unique.
         """
         if User.objects.filter(email=value).exists():
             raise serializers.ValidationError(
-                "A user with this email already exists.")
+                "A user with this email already exists."
+            )
         return value
 
     def validate_password(self, value):
@@ -71,9 +72,14 @@ class RegistrationSerializer(serializers.ModelSerializer):
         validated_data.pop('repeated_password')
 
         first_name, last_name = self._split_fullname(fullname)
+
         user = self._get_user(
-            fullname, validated_data['email'],
-            first_name, last_name, password)
+            username=fullname,
+            email=validated_data['email'],
+            first_name=first_name,
+            last_name=last_name,
+            password=password
+        )
         user.save()
         return user
 
@@ -88,7 +94,7 @@ class RegistrationSerializer(serializers.ModelSerializer):
 
     def _get_user(self, username, email, first_name, last_name, password):
         """
-        Return a new user instance with set password.
+        Return a new user instance with a set password.
         """
         user = User(
             username=username,
