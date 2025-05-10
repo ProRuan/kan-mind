@@ -29,10 +29,6 @@ ENV/
 # PyCharm
 .idea/
 
-# Migrations (optional to ignore if you're generating them per environment)
-**/migrations/
-!*/migrations/__init__.py
-
 # Python egg files
 *.egg
 *.egg-info/
