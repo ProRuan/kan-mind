@@ -7,12 +7,12 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 
 # 2. Local imports
-from .models import Comment, Task
 from .serializers import (
     TaskSerializer,
     TaskCreateSerializer,
     CommentSerializer
 )
+from task_app.models import Comment, Task
 
 
 class TaskCreateView(generics.CreateAPIView):

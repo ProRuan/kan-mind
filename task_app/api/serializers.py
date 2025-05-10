@@ -3,7 +3,7 @@ from django.contrib.auth.models import User
 from rest_framework import serializers
 
 # 2. Local imports
-from .models import Task, Comment
+from task_app.models import Task, Comment
 
 
 class UserSummarySerializer(serializers.ModelSerializer):

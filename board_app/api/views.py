@@ -6,14 +6,14 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 
 # 2. Local imports
-from .models import Board
 from .serializers import (
     BoardCreateSerializer,
     BoardDetailSerializer,
     BoardOverviewSerializer,
     BoardUpdateSerializer
 )
-from task_app.api.models import Task
+from board_app.models import Board
+from task_app.models import Task
 
 
 class BoardListCreateView(APIView):

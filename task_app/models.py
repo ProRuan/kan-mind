@@ -3,7 +3,7 @@ from django.db import models
 from django.contrib.auth.models import User
 
 # 2. Local imports
-from board_app.api.models import Board
+from board_app.models import Board
 
 
 class Task(models.Model):

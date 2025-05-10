@@ -3,8 +3,8 @@ from django.contrib.auth.models import User
 from rest_framework import serializers
 
 # 2. Local imports
-from .models import Board
-from task_app.api.models import Task
+from board_app.models import Board
+from task_app.models import Task
 
 
 class BoardOverviewSerializer(serializers.ModelSerializer):
